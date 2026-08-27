@@ -12,6 +12,8 @@ namespace OCA\DAV\Upload;
 use OCP\Files\IRootFolder;
 use OCP\IUserSession;
 use OCP\Share\IManager;
+use Sabre\DAV\Exception\Forbidden;
+use Sabre\DAV\INode;
 use Sabre\DAVACL\AbstractPrincipalCollection;
 use Sabre\DAVACL\PrincipalBackend;
 
