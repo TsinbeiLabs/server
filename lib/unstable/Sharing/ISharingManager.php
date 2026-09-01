@@ -225,4 +225,23 @@ interface ISharingManager {
 	 * @experimental 35.0.0
 	 */
 	public function getShares(ShareAccessContext $accessContext, ?string $filterSourceTypeClass, ?string $filterSourceTypeValue, ?ShareState $filterState, ?ShareUserStatus $filterUserStatus, ?string $lastShareID, ?int $limit): array;
+
+	/**
+	 * Get a list of recipients a user has shared with, ordered by share count
+	 *
+	 * "shared with" includes both shares owned by the user, and reshares initiated by the user
+	 *
+	 * @param ?list<class-string<IShareRecipientType>> $filterRecipientTypeClasses
+	 * @param null|non-empty-string $notInShare
+	 * @param null|non-negative-int $count
+	 * @return ShareRecipient[]
+	 * @experimental 35.0.0
+	 */
+	public function getRecipientsForUser(
+		ShareUser $user,
+		?array $filterRecipientTypeClasses = null,
+		?string $notInShare = null,
+		?int $count = 5,
+		?ShareRecipient $after = null,
+	): array;
 }

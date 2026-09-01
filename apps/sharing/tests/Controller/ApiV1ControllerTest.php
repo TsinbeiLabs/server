@@ -17,6 +17,7 @@ use NCU\Sharing\Recipient\ShareRecipient;
 use NCU\Sharing\Share;
 use NCU\Sharing\ShareAccessContext;
 use NCU\Sharing\ShareState;
+use NCU\Sharing\ShareUser;
 use NCU\Sharing\ShareUserStatus;
 use NCU\Sharing\Source\ShareSource;
 use OCA\Sharing\Controller\ApiV1Controller;
@@ -25,6 +26,7 @@ use OCP\HintException;
 use OCP\IDBConnection;
 use OCP\IRequest;
 use OCP\IURLGenerator;
+use OCP\IUser;
 use OCP\IUserManager;
 use OCP\IUserSession;
 use OCP\L10N\IFactory;
@@ -199,6 +201,24 @@ final class ApiV1ControllerTest extends AbstractSharingManagerTests {
 
 			/** @psalm-suppress ArgumentTypeCoercion */
 			return $controller->getShares($filterSourceTypeClass, $filterSourceTypeValue, $filterState?->value, $filterUserStatus?->value, $lastShareID);
+		});
+	}
+
+	#[Override]
+	protected function getRecipientsForUser(
+		ShareUser $user,
+		?array $filterRecipientTypeClasses = null,
+		?string $notInShare = null,
+		?int $count = 5,
+		?ShareRecipient $after = null,
+	): array {
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn($user->getUID());
+
+		$accessContext = new ShareAccessContext($user);
+		return $this->executeRequest($accessContext, function (ApiV1Controller $controller) use ($user, $filterRecipientTypeClasses, $notInShare, $count, $after): DataResponse {
+			/** @psalm-suppress ArgumentTypeCoercion */
+			return $controller->recommendRecipients($filterRecipientTypeClasses, $count, $notInShare, $after?->class, $after?->instance, $after?->value);
 		});
 	}
 }

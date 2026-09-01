@@ -26,6 +26,7 @@ use NCU\Sharing\Recipient\ShareRecipient;
 use NCU\Sharing\Share;
 use NCU\Sharing\ShareAccessContext;
 use NCU\Sharing\ShareState;
+use NCU\Sharing\ShareUser;
 use NCU\Sharing\ShareUserStatus;
 use NCU\Sharing\Source\IShareSourceType;
 use NCU\Sharing\Source\ShareSource;
@@ -123,6 +124,49 @@ final class ApiV1Controller extends OCSController {
 		} catch (ShareNotFoundException $shareNotFoundException) {
 			return new DataResponse($shareNotFoundException->getHint(), Http::STATUS_NOT_FOUND);
 		}
+	}
+
+	/**
+	 * Get recommended recipients for the current user, based on share frequency.
+	 *
+	 * @param ?list<class-string<IShareRecipientType>> $filterRecipientTypeClasses Type classes of recipients to filter by
+	 * @param int<1, 100> $limit The maximum number of participants
+	 * @param ?non-empty-string $id If provided, recipients that are already part of the share will not be returned.
+	 * @param ?non-empty-string $afterRecipientClass If all `after` values are provided, return recipients that come after the specified recipient.
+	 * @param ?non-empty-string $afterRecipientInstance If all `after` values are provided, return recipients that come after the specified recipient.
+	 * @param ?non-empty-string $afterRecipientValue If all `after` values are provided, return recipients that come after the specified recipient.
+	 * @return DataResponse<Http::STATUS_OK, list<SharingRecipient>, array{}>|DataResponse<Http::STATUS_BAD_REQUEST|Http::STATUS_NOT_FOUND, string, array{}>
+	 *
+	 * 200: Recipients returned
+	 * 400: Invalid recipient search parameters
+	 * 404: Share used for filtering existing recipients does not exist
+	 */
+	#[NoAdminRequired]
+	#[ApiRoute(verb: 'GET', url: '/api/v1/recipients/recommended')]
+	public function recommendRecipients(
+		?array $filterRecipientTypeClasses = null,
+		int $limit = 5,
+		?string $id = null,
+		?string $afterRecipientClass = null,
+		?string $afterRecipientInstance = null,
+		?string $afterRecipientValue = null,
+	): DataResponse {
+		$afterRecipient = null;
+		if (!is_null($afterRecipientClass) || !is_null($afterRecipientInstance) || !is_null($afterRecipientValue)) {
+			if (is_null($afterRecipientClass)) {
+				return new DataResponse('either all `after` values need to be null, or none of them', Http::STATUS_BAD_REQUEST);
+			}
+			if (is_null($afterRecipientValue)) {
+				return new DataResponse('either all `after` values need to be null, or none of them', Http::STATUS_BAD_REQUEST);
+			}
+			$afterRecipient = new ShareRecipient(
+				$afterRecipientClass,
+				$afterRecipientInstance,
+				$afterRecipientValue
+			);
+		}
+		$user = new ShareUser($this->accessContext->currentUser->getUID(), null);
+		$this->manager->getRecipientsForUser($user, $filterRecipientTypeClasses, $id, $limit, $afterRecipient);
 	}
 
 	/**

@@ -1408,6 +1408,106 @@ final readonly class SharingBackend implements ISharingBackend {
 		);
 	}
 
+	#[\Override]
+	public function getRecipientsForUser(
+		ShareUser $user,
+		?array $filterRecipientTypeClasses = null,
+		?string $notInShare = null,
+		?int $count = 5,
+		?ShareRecipient $after = null,
+	): array {
+		$query = $this->connection->getTypedQueryBuilder();
+
+		// Add an `eq` constraint, or an `is null` constraint, depending on if the value is null
+		$eqOrNull = fn ($table, $value) => ($value === null)
+			?$query->expr()->isNull($table)
+			:$query->expr()->eq($table, $query->createNamedParameter($value));
+
+		$query->select('recipient_class_id', 'recipient_value', 'recipient_instance', 'initiator_user_id', 'initiator_instance')
+			->selectAlias($query->func()->count('*'), 'count')
+			->from('sharing_share_recipients', 'r')
+			->innerJoin('r', 'sharing_share', 's', $query->expr()->eq('r.share_id', 's.id'))
+			->where(
+				$query->expr()->orX(
+					$query->expr()->andX(
+						$query->expr()->eq('s.owner_user_id', $query->createNamedParameter($user->userId)),
+						$eqOrNull('s.owner_instance', $user->instance),
+					),
+					$query->expr()->andX(
+						$query->expr()->eq('r.initiator_user_id', $query->createNamedParameter($user->userId)),
+						$eqOrNull('r.initiator_instance', $user->instance),
+					),
+				)
+			)
+			->groupBy('r.recipient_class_id', 'r.recipient_value', 'r.recipient_instance', 'r.initiator_user_id', 'r.initiator_instance')
+			->orderBy('count', \SortDirection::Descending)
+			// sort by recipient to get a stable output, and allow "after" to be deterministic
+			->addOrderBy(
+				'recipient_instance', \SortDirection::Ascending
+			)
+			->addOrderBy(
+				'recipient_value', \SortDirection::Ascending
+			)
+			->addOrderBy('recipient_class_id', \SortDirection::Ascending);
+
+		if ($filterRecipientTypeClasses) {
+			$filterRecipientTypeClassIds = array_map($this->classMapper->getClassId(...), $filterRecipientTypeClasses);
+			$query = $query->andWhere(
+				$query->expr()->in('recipient_class_id', $query->createNamedParameter($filterRecipientTypeClassIds, IQueryBuilder::PARAM_INT_ARRAY))
+			);
+		}
+
+		if ($notInShare) {
+			$fullRecipientId = $query->func()->concat('recipient_class_id', 'recipient_instance', 'recipient_value');
+
+			$subQuery = $this->connection->getTypedQueryBuilder();
+			$subQuery->selectAlias($fullRecipientId, 'recipient')
+				->from('sharing_share_recipients')
+				->where($query->expr()->eq('share_id', $query->createNamedParameter($notInShare)));
+
+			$query = $query->andWhere(
+				$query->expr()->notIn(
+					$fullRecipientId,
+					$query->createFunction('(' . $subQuery->getSQL() . ')')
+				)
+			);
+		}
+
+		if ($count) {
+			$query->setMaxResults($count);
+		}
+
+		if ($after) {
+			$query = $query->andWhere(
+				$query->expr()->orX(
+					$query->expr()->andX(
+						$eqOrNull('r.recipient_instance', $after->instance),
+						$query->expr()->eq('r.recipient_value', $query->createNamedParameter($after->value)),
+						$query->expr()->gt('r.recipient_class_id', $query->createNamedParameter($this->classMapper->getClassId($after->class), IQueryBuilder::PARAM_INT)),
+					),
+					$query->expr()->andX(
+						$eqOrNull('r.recipient_instance', $after->instance),
+						$query->expr()->gt('r.recipient_value', $query->createNamedParameter($after->value)),
+					),
+					$query->expr()->gt('r.recipient_instance', $query->createNamedParameter($after->instance)),
+				)
+			);
+		}
+
+		$rows = $query->executeQuery()->fetchAll();
+
+		return array_map(fn (array $row) => new ShareRecipient(
+			$this->classMapper->getClassName($row['recipient_class_id']),
+			$row['recipient_value'],
+			$row['recipient_instance'],
+			null,
+			new ShareUser(
+				$row['initiator_user_id'],
+				$row['initiator_instance'],
+			)
+		), $rows);
+	}
+
 	private static function parseTimestamp(string $timestampMs): \DateTimeImmutable {
 		if (method_exists(\DateTimeImmutable::class, 'createFromTimestamp')) {
 			// with php 8.3 the method doesn't exist and psalm doesn't know the return type
