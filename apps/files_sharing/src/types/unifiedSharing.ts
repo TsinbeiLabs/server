@@ -50,6 +50,8 @@ export interface SharingRecipient {
 	icon: SharingIcon | null
 	secret: SharingRecipientSecret
 	initiator: SharingOwner | null
+	/** Per-recipient permissions, capped at the share-level ones */
+	permissions: SharingPermission[]
 }
 
 export interface SharingPermission {

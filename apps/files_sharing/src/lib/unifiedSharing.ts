@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
-import type { SharingRecipient, SharingShare } from '../types/unifiedSharing.ts'
+import type { SharingPermission, SharingRecipient, SharingShare } from '../types/unifiedSharing.ts'
 
 import { getCapabilities } from '@nextcloud/capabilities'
 import { translatePlural as n, translate as t } from '@nextcloud/l10n'
@@ -66,6 +66,34 @@ export function permissionLabel(share: SharingShare): string {
 	const capabilities = getCapabilities() as CapabilitiesWithPresets
 	const preset = (capabilities.sharing?.permission_presets ?? []).find((p) => p.class === share.permission_preset)
 	return preset?.display_name ?? t('files_sharing', 'Custom permissions')
+}
+
+/**
+ * Human-readable label for a set of permissions: the preset whose member
+ * permissions are exactly the enabled ones, else "Custom permissions".
+ *
+ * @param permissions The permissions to label
+ */
+function labelForPermissions(permissions: SharingPermission[]): string {
+	const capabilities = getCapabilities() as CapabilitiesWithPresets
+	const enabled = new Set(permissions.filter((permission) => permission.enabled).map((permission) => permission.class))
+	for (const preset of capabilities.sharing?.permission_presets ?? []) {
+		const members = permissions.filter((permission) => permission.presets.includes(preset.class))
+		if (members.length > 0 && members.length === enabled.size && members.every((permission) => enabled.has(permission.class))) {
+			return preset.display_name
+		}
+	}
+	return t('files_sharing', 'Custom permissions')
+}
+
+/**
+ * Human-readable permission label for a single recipient. Recipients carry
+ * their own permissions (and no preset field), so the preset is derived.
+ *
+ * @param recipient The recipient
+ */
+export function recipientPermissionLabel(recipient: SharingRecipient): string {
+	return labelForPermissions(recipient.permissions ?? [])
 }
 
 /**

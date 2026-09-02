@@ -7,22 +7,22 @@ import type { SharingPermission, SharingRecipient, SharingShare } from '../types
 
 import { describe, expect, test, vi } from 'vitest'
 import {
-	RECIPIENT_TYPE_GROUP,
-	RECIPIENT_TYPE_USER,
-} from './unifiedSharingConstants.ts'
-import {
 	isNoUserRecipient,
 	permissionLabel,
+	recipientPermissionLabel,
 	recipientSummary,
 	reshareSubtitle,
 	sharePermissionRank,
 	sortSharesByPermission,
 } from './unifiedSharing.ts'
+import {
+	RECIPIENT_TYPE_GROUP,
+	RECIPIENT_TYPE_USER,
+} from './unifiedSharingConstants.ts'
 
 vi.mock('@nextcloud/l10n', () => ({
 	translate: (_app: string, text: string) => text,
-	translatePlural: (_app: string, singular: string, plural: string, count: number) =>
-		(count === 1 ? singular : plural).replace('%n', String(count)),
+	translatePlural: (_app: string, singular: string, plural: string, count: number) => (count === 1 ? singular : plural).replace('%n', String(count)),
 }))
 
 vi.mock('@nextcloud/capabilities', () => ({
@@ -36,37 +36,44 @@ vi.mock('@nextcloud/capabilities', () => ({
 	}),
 }))
 
-const permission = (cls: string, priority: number, enabled: boolean): SharingPermission => ({
-	class: cls,
-	source_class: null,
-	display_name: cls,
-	hint: null,
-	priority,
-	presets: [],
-	enabled,
-})
+function permission(cls: string, priority: number, enabled: boolean, presets: string[] = []): SharingPermission {
+	return {
+		class: cls,
+		source_class: null,
+		display_name: cls,
+		hint: null,
+		priority,
+		presets,
+		enabled,
+	}
+}
 
-const recipient = (cls: string, value: string, initiator: SharingRecipient['initiator'] = null): SharingRecipient => ({
-	class: cls,
-	value,
-	instance: null,
-	display_name: value,
-	icon: null,
-	secret: { updatable: false },
-	initiator,
-})
+function recipient(cls: string, value: string, initiator: SharingRecipient['initiator'] = null, permissions: SharingPermission[] = []): SharingRecipient {
+	return {
+		class: cls,
+		value,
+		instance: null,
+		display_name: value,
+		icon: null,
+		secret: { updatable: false },
+		initiator,
+		permissions,
+	}
+}
 
-const share = (overrides: Partial<SharingShare> = {}): SharingShare => ({
-	id: '1',
-	owner: { user_id: 'alice', instance: null, display_name: 'Alice', icon: { svg: '' } },
-	last_updated: 0,
-	state: 'active',
-	sources: [],
-	recipients: [],
-	permissions: [],
-	permission_preset: null,
-	...overrides,
-})
+function share(overrides: Partial<SharingShare> = {}): SharingShare {
+	return {
+		id: '1',
+		owner: { user_id: 'alice', instance: null, display_name: 'Alice', icon: { svg: '' } },
+		last_updated: 0,
+		state: 'active',
+		sources: [],
+		recipients: [],
+		permissions: [],
+		permission_preset: null,
+		...overrides,
+	}
+}
 
 describe('sharePermissionRank', () => {
 	test('sums priorities of enabled permissions only', () => {
@@ -140,5 +147,20 @@ describe('reshareSubtitle', () => {
 
 	test('empty when no reshares', () => {
 		expect(reshareSubtitle(share({ recipients: [recipient(RECIPIENT_TYPE_USER, 'bob')] }))).toBe('')
+	})
+})
+
+describe('recipientPermissionLabel', () => {
+	const read = (enabled: boolean) => permission('read', 1, enabled, ['PresetView', 'PresetEdit'])
+	const write = (enabled: boolean) => permission('write', 4, enabled, ['PresetEdit'])
+
+	test('derives the preset matching the enabled permissions', () => {
+		expect(recipientPermissionLabel(recipient(RECIPIENT_TYPE_USER, 'bob', null, [read(true), write(false)]))).toBe('Can view')
+		expect(recipientPermissionLabel(recipient(RECIPIENT_TYPE_USER, 'bob', null, [read(true), write(true)]))).toBe('Can edit')
+	})
+
+	test('falls back to Custom permissions when nothing matches', () => {
+		expect(recipientPermissionLabel(recipient(RECIPIENT_TYPE_USER, 'bob', null, [read(false), write(true)]))).toBe('Custom permissions')
+		expect(recipientPermissionLabel(recipient(RECIPIENT_TYPE_USER, 'bob'))).toBe('Custom permissions')
 	})
 })

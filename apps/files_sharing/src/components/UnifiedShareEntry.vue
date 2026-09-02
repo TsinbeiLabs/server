@@ -9,7 +9,7 @@
 		<SharingEntrySimple
 			v-if="isSingle"
 			:title="recipients[0].display_name"
-			:subtitle="permissionSubtitle">
+			:subtitle="recipientPermissionLabel(recipients[0])">
 			<template #avatar>
 				<NcAvatar
 					:size="32"
@@ -73,8 +73,8 @@
 				:key="recipient.class + recipient.value"
 				class="unified-share__recipient"
 				:title="recipient.display_name"
-				:subtitle="permissionSubtitle"
-				force-menu>
+				:subtitle="recipientPermissionLabel(recipient)"
+				forceMenu>
 				<template #avatar>
 					<NcAvatar
 						:size="32"
@@ -105,7 +105,7 @@ import DeleteIcon from 'vue-material-design-icons/Delete.vue'
 import PencilIcon from 'vue-material-design-icons/Pencil.vue'
 import AvatarStack from './AvatarStack.vue'
 import SharingEntrySimple from './SharingEntrySimple.vue'
-import { isNoUserRecipient, permissionLabel, recipientSummary, reshareSubtitle } from '../lib/unifiedSharing.ts'
+import { isNoUserRecipient, recipientPermissionLabel, recipientSummary, reshareSubtitle } from '../lib/unifiedSharing.ts'
 import logger from '../services/logger.ts'
 import { openShareEditDialog } from '../services/SharingDialog.ts'
 import { deleteShare, removeRecipient } from '../services/unifiedShares.ts'
@@ -159,10 +159,6 @@ export default {
 			return recipientSummary(this.recipients)
 		},
 
-		permissionSubtitle() {
-			return permissionLabel(this.share)
-		},
-
 		reshareLine() {
 			return reshareSubtitle(this.share)
 		},
@@ -171,6 +167,7 @@ export default {
 	methods: {
 		t,
 		isNoUserRecipient,
+		recipientPermissionLabel,
 
 		async openEditDialog() {
 			try {
