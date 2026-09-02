@@ -1577,6 +1577,7 @@
     <UndefinedClass>
       <code><![CDATA[Circles]]></code>
       <code><![CDATA[Circles]]></code>
+      <code><![CDATA[Circles]]></code>
     </UndefinedClass>
     <UndefinedDocblockClass>
       <code><![CDATA[$this->getRoomShareHelper()]]></code>
@@ -2691,14 +2692,6 @@
     <NullArgument>
       <code><![CDATA[null]]></code>
     </NullArgument>
-  </file>
-  <file src="apps/workflowengine/lib/Check/RequestRemoteAddress.php">
-    <InvalidArgument>
-      <code><![CDATA[$decodedValue[1]]]></code>
-      <code><![CDATA[$decodedValue[1]]]></code>
-      <code><![CDATA[$decodedValue[1]]]></code>
-      <code><![CDATA[$decodedValue[1]]]></code>
-    </InvalidArgument>
   </file>
   <file src="apps/workflowengine/lib/Check/TFileCheck.php">
     <InvalidArgument>
@@ -3934,12 +3927,10 @@
   </file>
   <file src="lib/private/Group/Manager.php">
     <LessSpecificReturnStatement>
-      <code><![CDATA[$groups]]></code>
       <code><![CDATA[array_values($groups)]]></code>
       <code><![CDATA[array_values($groups)]]></code>
     </LessSpecificReturnStatement>
     <MoreSpecificReturnType>
-      <code><![CDATA[\OC\Group\Group[]]]></code>
       <code><![CDATA[\OC\Group\Group[]]]></code>
     </MoreSpecificReturnType>
     <UndefinedInterfaceMethod>
