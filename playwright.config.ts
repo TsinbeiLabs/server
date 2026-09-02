@@ -50,8 +50,21 @@ export default defineConfig({
 		},
 
 		{
+			// Unified sharing tests. Enabling the unified sharing API is an
+			// instance-wide switch that replaces the legacy sidebar sections, so
+			// they must not run alongside the specs driving the legacy share editor
+			name: 'unified-sharing',
+			fullyParallel: false,
+			workers: 1,
+			testMatch: '**/unified-*.spec.ts',
+			use: {
+				...BROWSWER_CONFIG_CHROME,
+			},
+		},
+
+		{
 			name: 'default',
-			testMatch: /\/(?!admin-settings)[^/]*\.spec\.ts$/,
+			testMatch: /\/(?!admin-settings|unified-)[^/]*\.spec\.ts$/,
 			grepInvert: /@setup/,
 			use: {
 				...BROWSWER_CONFIG_CHROME,
