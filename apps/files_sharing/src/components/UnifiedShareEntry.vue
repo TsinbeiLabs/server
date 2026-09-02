@@ -9,7 +9,7 @@
 		<SharingEntrySimple
 			v-if="isSingle"
 			:title="recipients[0].display_name"
-			:subtitle="recipientPermissionLabel(recipients[0])">
+			:subtitle="recipientPermissionLabel(share, recipients[0])">
 			<template #avatar>
 				<NcAvatar
 					:size="32"
@@ -73,7 +73,7 @@
 				:key="recipient.class + recipient.value"
 				class="unified-share__recipient"
 				:title="recipient.display_name"
-				:subtitle="recipientPermissionLabel(recipient)"
+				:subtitle="recipientPermissionLabel(share, recipient)"
 				forceMenu>
 				<template #avatar>
 					<NcAvatar

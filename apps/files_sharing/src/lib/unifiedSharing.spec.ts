@@ -153,14 +153,20 @@ describe('reshareSubtitle', () => {
 describe('recipientPermissionLabel', () => {
 	const read = (enabled: boolean) => permission('read', 1, enabled, ['PresetView', 'PresetEdit'])
 	const write = (enabled: boolean) => permission('write', 4, enabled, ['PresetEdit'])
+	// Share grants both -> its own label would be "Can edit".
+	const base = share({ permissions: [read(true), write(true)] })
 
-	test('derives the preset matching the enabled permissions', () => {
-		expect(recipientPermissionLabel(recipient(RECIPIENT_TYPE_USER, 'bob', null, [read(true), write(false)]))).toBe('Can view')
-		expect(recipientPermissionLabel(recipient(RECIPIENT_TYPE_USER, 'bob', null, [read(true), write(true)]))).toBe('Can edit')
+	test('inherits the share permissions when the recipient has no overrides', () => {
+		expect(recipientPermissionLabel(base, recipient(RECIPIENT_TYPE_USER, 'bob'))).toBe('Can edit')
+	})
+
+	test('applies the recipient overrides on top of the share', () => {
+		const r = recipient(RECIPIENT_TYPE_USER, 'bob', null, [write(false)])
+		expect(recipientPermissionLabel(base, r)).toBe('Can view')
 	})
 
 	test('falls back to Custom permissions when nothing matches', () => {
-		expect(recipientPermissionLabel(recipient(RECIPIENT_TYPE_USER, 'bob', null, [read(false), write(true)]))).toBe('Custom permissions')
-		expect(recipientPermissionLabel(recipient(RECIPIENT_TYPE_USER, 'bob'))).toBe('Custom permissions')
+		const r = recipient(RECIPIENT_TYPE_USER, 'bob', null, [read(false)])
+		expect(recipientPermissionLabel(base, r)).toBe('Custom permissions')
 	})
 })

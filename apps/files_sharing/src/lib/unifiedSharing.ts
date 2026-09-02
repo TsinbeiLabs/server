@@ -87,13 +87,20 @@ function labelForPermissions(permissions: SharingPermission[]): string {
 }
 
 /**
- * Human-readable permission label for a single recipient. Recipients carry
- * their own permissions (and no preset field), so the preset is derived.
+ * Human-readable permission label for a single recipient.
  *
+ * A recipient's permissions are sparse overrides on top of the share's, so the
+ * effective state is the share's permissions with the recipient's applied.
+ *
+ * @param share The share the recipient belongs to
  * @param recipient The recipient
  */
-export function recipientPermissionLabel(recipient: SharingRecipient): string {
-	return labelForPermissions(recipient.permissions ?? [])
+export function recipientPermissionLabel(share: SharingShare, recipient: SharingRecipient): string {
+	const overrides = new Map((recipient.permissions ?? []).map((permission) => [permission.class, permission]))
+	return labelForPermissions(share.permissions.map((permission) => ({
+		...permission,
+		enabled: overrides.get(permission.class)?.enabled ?? permission.enabled,
+	})))
 }
 
 /**
