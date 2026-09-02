@@ -172,9 +172,12 @@ export default {
 		async openEditDialog() {
 			try {
 				await openShareEditDialog(this.share.id, this.fileInfo.node)
-				this.$emit('refresh')
 			} catch (error) {
 				logger.error('Failed to open the sharing dialog', { error })
+			} finally {
+				// Refresh even if the dialog errored, it may still have applied
+				// changes (recipients, permissions) before closing.
+				this.$emit('refresh')
 			}
 		},
 

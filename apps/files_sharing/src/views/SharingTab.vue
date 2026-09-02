@@ -389,6 +389,10 @@ export default {
 				await openShareCreateDialog(this.fileInfo.node)
 			} catch (error) {
 				logger.error('Failed to open the sharing dialog', { error })
+			} finally {
+				// The dialog writes straight to the backend, so pick up whatever it
+				// created (or changed) once it closes.
+				await this.getUnifiedShares(false)
 			}
 		},
 
