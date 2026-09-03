@@ -9,7 +9,6 @@ import { runOcc } from '@nextcloud/e2e-test-server/docker'
 import { createRandomUser } from '@nextcloud/e2e-test-server/playwright'
 import { SharingDialogPage } from '../sections/SharingDialogPage.ts'
 import { UnifiedShareListPage } from '../sections/UnifiedShareListPage.ts'
-import { enableUnifiedSharing } from '../utils/unifiedSharing.ts'
 import { test as sharingTest } from './sharing-page.ts'
 
 type UnifiedSharingFixtures = {
@@ -33,14 +32,8 @@ type UnifiedSharingFixtures = {
  * serial `sharing` project in `playwright.config.ts`.
  */
 export const test = sharingTest.extend<UnifiedSharingFixtures>({
-	// Overrides the parent fixture, which turns the unified API off for the
-	// legacy share editor specs.
-	unifiedSharingApi: [async ({}, use) => {
-		const restore = await enableUnifiedSharing()
-		await use()
-		await restore()
-		// `auto` is inherited from the fixture this overrides.
-	}, { scope: 'worker' }],
+	// The share editor fixtures turn the unified API off; these specs need it on.
+	unifiedSharingMode: ['on', { scope: 'worker' }],
 
 	secondRecipient: async ({}, use) => {
 		const user = await createRandomUser()

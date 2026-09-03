@@ -5,6 +5,8 @@
 
 import type { Locator, Page } from '@playwright/test'
 
+import { expect } from '@playwright/test'
+
 /**
  * The unified sharing dialog (`@nextcloud/sharing/dialog`), opened from the
  * files sidebar through the `OCA.Sharing` bridge.
@@ -98,9 +100,13 @@ export class SharingDialogPage {
 	 * @param name The result to pick; defaults to the query
 	 */
 	async addRecipient(query: string, name: string = query): Promise<void> {
+		// The search is debounced; wait for its answer so the options are not still
+		// being replaced when the pick happens.
+		const searched = this.#page.waitForResponse((response) => response.url().includes('/api/v1/recipients'))
 		await this.recipientSearch.fill(query)
+		await searched
 		const option = this.#page.getByRole('option', { name: new RegExp(name) })
-		await option.waitFor()
+		await expect(option).toBeVisible()
 		// The recipient is added by the request the selection triggers.
 		const added = this.#page.waitForResponse((response) => response.url().includes('/recipient')
 			&& response.request().method() === 'POST')
@@ -137,21 +143,6 @@ export class SharingDialogPage {
 	}
 
 	// --- Share level permissions ---
-
-	get presetSelect(): Locator {
-		return this.dialog.getByRole('combobox', { name: 'Default permission' })
-	}
-
-	/**
-	 * Pick the share-level preset, which is the default and the maximum for its
-	 * recipients.
-	 *
-	 * @param preset The preset label
-	 */
-	async selectPreset(preset: string | RegExp): Promise<void> {
-		await this.presetSelect.click()
-		await this.#page.getByRole('option', { name: preset }).click()
-	}
 
 	/**
 	 * A share-level permission toggle, shown once "Custom permissions" is picked.

@@ -86,6 +86,17 @@ export async function enableUnifiedSharing(): Promise<() => Promise<void>> {
 }
 
 /**
+ * Turn the unified sharing API off for the whole instance, so the sidebar falls
+ * back to the previous share editor, and return a restore function.
+ */
+export async function disableUnifiedSharing(): Promise<() => Promise<void>> {
+	await runOcc(['config:system:set', 'sharing.unified_api_enable', '--value', 'false', '--type', 'boolean'])
+	return async () => {
+		await runOcc(['config:system:delete', 'sharing.unified_api_enable'], { failOnError: false })
+	}
+}
+
+/**
  * Assert the class strings this file hardcodes are actually registered on the
  * server, so a backend rename surfaces as a clear failure.
  *
@@ -170,6 +181,18 @@ export async function getUnifiedShares(request: APIRequestContext, fileId: strin
 		{ headers: { 'OCS-APIRequest': 'true' } },
 	)
 	return (await response.json()).ocs.data as UnifiedShare[]
+}
+
+/**
+ * Set the share's permission preset, which is the default and the cap for its
+ * recipients.
+ *
+ * @param request A request context authenticated as the share owner
+ * @param shareId The share id
+ * @param preset The preset class to apply
+ */
+export async function setSharePreset(request: APIRequestContext, shareId: string, preset: string): Promise<void> {
+	await ocs(request, 'put', `/share/${shareId}/permission/preset`, { permissionPresetClass: preset })
 }
 
 /**
