@@ -80,7 +80,7 @@
 					:reshare="reshare"
 					:shares="shares"
 					:placeholder="internalShareInputPlaceholder"
-					@openSharingDetails="toggleShareDetailsView" />
+					@open-sharing-details="toggleShareDetailsView" />
 
 				<!-- other shares list -->
 				<SharingList
@@ -88,7 +88,7 @@
 					ref="shareList"
 					:shares="shares"
 					:fileInfo="fileInfo"
-					@openSharingDetails="toggleShareDetailsView" />
+					@open-sharing-details="toggleShareDetailsView" />
 
 				<!-- inherited shares -->
 				<SharingInherited v-if="canReshare && !loading" :fileInfo="fileInfo" />
@@ -125,13 +125,13 @@
 					:placeholder="externalShareInputPlaceholder"
 					:reshare="reshare"
 					:shares="shares"
-					@openSharingDetails="toggleShareDetailsView" />
+					@open-sharing-details="toggleShareDetailsView" />
 				<!-- Non link external shares list -->
 				<SharingList
 					v-if="!loading"
 					:shares="externalShares"
 					:fileInfo="fileInfo"
-					@openSharingDetails="toggleShareDetailsView" />
+					@open-sharing-details="toggleShareDetailsView" />
 				<!-- link shares list -->
 				<SharingLinkList
 					v-if="!loading && isLinkSharingAllowed"
@@ -139,7 +139,7 @@
 					:canReshare="canReshare"
 					:fileInfo="fileInfo"
 					:shares="linkShares"
-					@openSharingDetails="toggleShareDetailsView" />
+					@open-sharing-details="toggleShareDetailsView" />
 			</section>
 
 			<section v-if="hasExternalSections && !showSharingDetailsView">
@@ -195,7 +195,7 @@
 			v-if="showSharingDetailsView"
 			:fileInfo="shareDetailsData.fileInfo"
 			:share="shareDetailsData.share"
-			@closeSharingDetails="toggleShareDetailsView"
+			@close-sharing-details="toggleShareDetailsView"
 			@add:share="addShare"
 			@remove:share="removeShare" />
 	</div>
