@@ -64,24 +64,20 @@ async function ocs<T>(
 }
 
 /**
- * Turn the unified sharing API on for the whole instance and lift its rate
- * limits, then return a restore function.
+ * Turn the unified sharing API on for the whole instance and return a restore
+ * function. It ships enabled, so this only matters after a spec turned it off.
  *
- * The API is off by default (`sharing.unified_api_enable`), which is what makes
- * the sidebar render the legacy sections. Its write endpoints are also rate
- * limited to one call per 1–5 seconds per user, which no realistic test (or
- * user) can stay under — a dialog that creates a draft on open and adds two
- * recipients would already trip it — so the limiter goes off with it.
+ * The rate limiter is deliberately left on: these specs drive the dialog the
+ * way a person does, so they are also the check that the API's limits are
+ * livable.
  *
- * Both are instance-wide, so specs using this must not run next to specs that
- * expect the legacy sidebar. See the `unified-sharing` Playwright project.
+ * The switch is instance-wide, so specs using this must not run next to specs
+ * that expect the legacy sidebar. See the serial `sharing` Playwright project.
  */
 export async function enableUnifiedSharing(): Promise<() => Promise<void>> {
 	await runOcc(['config:system:set', 'sharing.unified_api_enable', '--value', 'true', '--type', 'boolean'])
-	await runOcc(['config:system:set', 'ratelimit.protection.enabled', '--value', 'false', '--type', 'boolean'])
 	return async () => {
 		await runOcc(['config:system:delete', 'sharing.unified_api_enable'], { failOnError: false })
-		await runOcc(['config:system:delete', 'ratelimit.protection.enabled'], { failOnError: false })
 	}
 }
 
