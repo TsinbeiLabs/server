@@ -23,29 +23,24 @@ type UnifiedSharingFixtures = {
 	recipientGroup: string
 }
 
-type UnifiedSharingWorkerFixtures = {
-	/**
-	 * Turns the unified sharing API on for the worker and lifts its rate limits.
-	 * Auto-used, so every spec built on this fixture gets it.
-	 */
-	unifiedSharingEnabled: void
-}
-
 /**
  * Fixtures for the unified sharing sidebar and dialog. On top of the share
- * editor fixtures (`user` is the sharer, `recipient` a second account) it
- * enables the unified sharing API, which the instance ships disabled.
+ * editor fixtures (`user` is the sharer, `recipient` a second account) it keeps
+ * the unified sharing API on and lifts its rate limits.
  *
- * That switch is instance-wide and hides the legacy sidebar sections, so these
+ * The switch is instance-wide and hides the legacy sidebar sections, so these
  * specs must not run beside specs driving the legacy share editor — hence the
- * serial `unified-sharing` project in `playwright.config.ts`.
+ * serial `sharing` project in `playwright.config.ts`.
  */
-export const test = sharingTest.extend<UnifiedSharingFixtures, UnifiedSharingWorkerFixtures>({
-	unifiedSharingEnabled: [async ({}, use) => {
+export const test = sharingTest.extend<UnifiedSharingFixtures>({
+	// Overrides the parent fixture, which turns the unified API off for the
+	// legacy share editor specs.
+	unifiedSharingApi: [async ({}, use) => {
 		const restore = await enableUnifiedSharing()
 		await use()
 		await restore()
-	}, { scope: 'worker', auto: true }],
+		// `auto` is inherited from the fixture this overrides.
+	}, { scope: 'worker' }],
 
 	secondRecipient: async ({}, use) => {
 		const user = await createRandomUser()

@@ -11,6 +11,17 @@ import { createRandomUser } from '@nextcloud/e2e-test-server/playwright'
 import { SharingTab } from '../sections/SharingTab.ts'
 import { test as filesTest } from './files-page.ts'
 
+type SharingWorkerFixtures = {
+	/**
+	 * Which sharing UI the sidebar renders. The unified sharing API ships enabled,
+	 * which replaces the share editor these specs drive, so it is turned off for
+	 * the worker. The unified specs override this fixture to turn it back on.
+	 *
+	 * The switch is instance-wide, hence the serial `sharing` project.
+	 */
+	unifiedSharingApi: void
+}
+
 type SharingFixtures = {
 	/**
 	 * A second account to share with. It is never logged into the browser — use
@@ -36,7 +47,13 @@ type SharingFixtures = {
  * browser is the recipient of a share seeded by `owner`) — pick whichever side
  * the spec drives through the UI.
  */
-export const test = filesTest.extend<SharingFixtures>({
+export const test = filesTest.extend<SharingFixtures, SharingWorkerFixtures>({
+	unifiedSharingApi: [async ({}, use) => {
+		await runOcc(['config:system:set', 'sharing.unified_api_enable', '--value', 'false', '--type', 'boolean'])
+		await use()
+		await runOcc(['config:system:delete', 'sharing.unified_api_enable'], { failOnError: false })
+	}, { scope: 'worker', auto: true }],
+
 	recipient: async ({}, use) => {
 		const recipient = await createRandomUser()
 		await use(recipient)

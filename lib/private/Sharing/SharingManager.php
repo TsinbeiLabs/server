@@ -154,8 +154,7 @@ final readonly class SharingManager implements ISharingManager, IEventListener {
 
 	#[\Override]
 	public function isApiEnabled(): bool {
-		// TODO: Enable Unified Sharing API by default
-		return $this->legacySharingManager->shareApiEnabled() && $this->config->getSystemValueBool('sharing.unified_api_enable');
+		return $this->legacySharingManager->shareApiEnabled() && $this->config->getSystemValueBool('sharing.unified_api_enable', true);
 	}
 
 	#[\Override]

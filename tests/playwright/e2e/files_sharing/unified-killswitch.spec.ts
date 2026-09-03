@@ -10,13 +10,13 @@ import { createShare, openSharingPanel } from '../../support/utils/sharing.ts'
 
 /**
  * The unified sharing API is the killswitch for the new sidebar: with no API
- * version advertised in the capabilities, the sidebar has to fall back to the
- * legacy sections. This spec asserts the *off* state, so unlike its siblings it
- * deliberately does not enable the API.
+ * version advertised in the capabilities, the sidebar falls back to the legacy
+ * sections. The API ships enabled, so this spec turns it off explicitly, unlike
+ * its siblings.
  */
 test.describe('files_sharing: sidebar without the unified sharing API', () => {
 	test.beforeAll(async () => {
-		await runOcc(['config:system:delete', 'sharing.unified_api_enable'], { failOnError: false })
+		await runOcc(['config:system:set', 'sharing.unified_api_enable', '--value', 'false', '--type', 'boolean'])
 	})
 
 	// The sibling specs share this worker and expect the API on. Their worker
