@@ -14,8 +14,7 @@ const capabilities = vi.hoisted(() => ({ value: {} as unknown }))
 vi.mock('@nextcloud/capabilities', () => ({ getCapabilities: () => capabilities.value }))
 
 vi.mock('@nextcloud/router', () => ({
-	generateOcsUrl: (path: string, params?: Record<string, string>) =>
-		'ocs/' + path.replace(/\{(\w+)\}/g, (_, k) => params?.[k] ?? ''),
+	generateOcsUrl: (path: string, params?: Record<string, string>) => 'ocs/' + path.replace(/\{(\w+)\}/g, (_, k) => params?.[k] ?? ''),
 }))
 
 vi.mock('./logger.ts', () => ({ default: { warn: vi.fn(), error: vi.fn(), debug: vi.fn() } }))
